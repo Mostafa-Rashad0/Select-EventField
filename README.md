@@ -1,53 +1,41 @@
 # Select-EventField
 
-A reusable PowerShell helper for extracting named fields from Windows Event Logs during DFIR investigations.  
-Automates profile setup so the function can be reused across multiple Windows VMs without rewriting XML parsing code.
+A reusable PowerShell helper for extracting named fields from Windows Event Logs. The setup script installs `Select-EventField` in your PowerShell profile so you can reuse it across investigations and Windows VMs.
 
-## Features
+## Quick Installation
 
-- Automatically creates the PowerShell profile if it does not exist.
-- Installs the `Select-EventField` function.
-- Extracts selected fields from Sysmon events.
-- Includes event timestamps and Event IDs in the output.
-- Avoids adding the function more than once.
+Run these commands in **PowerShell**, in order.
 
-## Requirements
+### 1. Download the setup script
 
-- Windows PowerShell or PowerShell 7.
-- `Setup-EventField.ps1` saved locally.
-- Permission to create or modify your PowerShell profile.
+```powershell
+Invoke-WebRequest -Uri "https://raw.githubusercontent.com/Mostafa-Rashad0/Select-EventField/main/Setup-EventField.ps1" -OutFile "$HOME\Desktop\Setup-EventField.ps1"
+```
 
-## Installation
+### 2. Allow scripts for this session only
 
-1. Download `Setup-EventField.ps1` to your Windows VM.
-2. Open PowerShell as the user who will use the function.
-3. Navigate to the directory containing the script:
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+```
 
-   ```powershell
-   cd "$HOME\Desktop"
-   ```
+This setting applies only to the current PowerShell process. If your organization manages execution policy through Group Policy, follow its approved process instead of trying to bypass it.
 
-4. Run the setup script:
+### 3. Run the setup script
 
-   ```powershell
-   .\Setup-EventField.ps1
-   ```
+```powershell
+& "$HOME\Desktop\Setup-EventField.ps1"
+```
 
-## Activate and Verify
-
-After setup, load the profile into the current PowerShell session:
+### 4. Load the profile and verify
 
 ```powershell
 . $PROFILE
-```
-
-Verify that the function is available:
-
-```powershell
 Get-Command Select-EventField
 ```
 
-If the command is found, the function is ready to use. New PowerShell sessions should load the profile automatically.
+If `Get-Command` displays `Select-EventField`, the function is available in the current session. The profile should load automatically in new sessions for the same user and PowerShell host.
+
+> **Note:** Network access, repository contents, profile restrictions, or organizational policy may prevent installation.
 
 ## Usage
 
@@ -59,7 +47,7 @@ Get-WinEvent -Path "C:\path\Investigation-1.evtx" `
 Select-EventField -Fields Image, Device
 ```
 
-### Extract registry information from Event ID 13
+### Extract registry information from Sysmon Event ID 13
 
 ```powershell
 Get-WinEvent -Path "C:\path\Investigation-1.evtx" `
@@ -67,59 +55,36 @@ Get-WinEvent -Path "C:\path\Investigation-1.evtx" `
 Select-EventField -Fields Image, TargetObject, Details
 ```
 
-### Extract unique device paths
+Replace the example path with the actual `.evtx` path. Field names must match the names in the event XML.
 
-```powershell
-Get-WinEvent -Path "C:\path\Investigation-1.evtx" `
-    -FilterXPath '*/System/EventID=9' |
-Select-EventField -Fields Device |
-Select-Object -ExpandProperty Device -Unique
-```
+## Profile Management
 
-Replace the example file path with the actual path to your `.evtx` file.
-
-## Manage the Profile
-
-Display the profile path:
+Show the profile path:
 
 ```powershell
 $PROFILE
 ```
 
-Open the profile for editing:
+Open the profile:
 
 ```powershell
 notepad $PROFILE
 ```
 
-Reload the profile after editing:
+Reload it after editing:
 
 ```powershell
 . $PROFILE
 ```
 
-The profile is specific to the current user and PowerShell host. Run the setup script separately for other user accounts or PowerShell versions if needed.
+The profile is specific to the current user and PowerShell host/version. Run setup separately for other accounts or PowerShell versions where you need the function.
 
 ## Troubleshooting
 
-**Function not recognized**
-
-```powershell
-. $PROFILE
-Get-Command Select-EventField
-```
-
-**Check the profile contents**
-
-```powershell
-notepad $PROFILE
-```
-
-Confirm that the `Select-EventField` function definition exists and has no syntax errors.
-
-**A field returns an empty value**
-
-Check the event's XML and verify that the requested field exists in its `EventData`. Different Sysmon Event IDs expose different fields.
+- **The script path cannot be found:** `cd` is for directories, not files. Run the script with `& "$HOME\Desktop\Setup-EventField.ps1"`.
+- **Scripts are disabled:** In a permitted environment, run the process-scoped execution-policy command above in the same PowerShell window, then retry. Group Policy may override it.
+- **The function is not recognized:** Run `. $PROFILE`, then `Get-Command Select-EventField`.
+- **Download fails:** Check network access and confirm `Setup-EventField.ps1` is uploaded to the repository's `main` branch at the URL above.
 
 ## Project Structure
 
@@ -128,7 +93,3 @@ Select-EventField/
 ├── README.md
 └── Setup-EventField.ps1
 ```
-
-## License
-
-MIT License (add a `LICENSE` file if you choose to distribute the project under MIT).
